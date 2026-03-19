@@ -310,9 +310,111 @@ const formatResponse = (text) => {
 };
 
 /* ================================================================
+   LOGIN GATE
+   ================================================================ */
+const LoginGate = ({ onLogin }) => {
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
+
+  const handleLogin = async () => {
+    if (!name.trim() || !password.trim()) { setError("The Oracle requires both your name and the sacred password."); return; }
+    setChecking(true); setError("");
+    try {
+      const res = await fetch("/api/auth", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ password }) });
+      const data = await res.json();
+      if (data.success) {
+        const user = name.trim().toLowerCase();
+        sessionStorage.setItem("oracle_user", user);
+        sessionStorage.setItem("oracle_auth", "true");
+        onLogin(user);
+      } else {
+        setError(data.error || "The gates remain sealed.");
+      }
+    } catch { setError("The cosmos trembles... try again."); }
+    setChecking(false);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <SkyBackground />
+      <div style={{
+        position:"relative", zIndex:10, width:"100%", maxWidth:440, padding:"0 24px",
+        animation:"fadeUp 0.8s ease both"
+      }}>
+        <div style={{ textAlign:"center", marginBottom:36 }}>
+          <Laurel size={56} />
+          <h1 style={{
+            fontFamily:"'Cinzel Decorative', 'Cinzel', serif",
+            fontSize:"clamp(28px, 6vw, 42px)", fontWeight:900,
+            background:"linear-gradient(135deg, #d4a030, #f0c850, #f8e8a8, #f0c850, #d4a030)",
+            backgroundSize:"200% auto", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+            backgroundClip:"text", animation:"shimmerGold 4s linear infinite",
+            letterSpacing:3, lineHeight:1.2, marginTop:8,
+            filter:"drop-shadow(0 2px 8px #d4a03044)"
+          }}>Oracle of Power</h1>
+          <p style={{ fontFamily:"'Cormorant Garamond', serif", fontStyle:"italic", color:"var(--cloud-mid)", marginTop:10, fontSize:16, lineHeight:1.6 }}>
+            Only those who know the sacred password may enter the Temple
+          </p>
+          <div style={{ maxWidth:280, margin:"16px auto 0" }}><GreekKey /></div>
+        </div>
+
+        <CloudPanel glow>
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div>
+              <label style={{ fontFamily:"'Cinzel', serif", fontSize:11, color:"var(--gold)", letterSpacing:4, fontWeight:700, display:"block", marginBottom:8 }}>YOUR NAME</label>
+              <input
+                type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder="How shall the Oracle address you?"
+                style={{
+                  width:"100%", background:"#0a042015", border:"1.5px solid #d4a03020",
+                  borderRadius:12, padding:"14px 18px", color:"var(--text-light)",
+                  fontSize:17, outline:"none", fontWeight:500,
+                  transition:"border-color 0.3s"
+                }}
+                onFocus={e => e.target.style.borderColor = "#d4a03050"}
+                onBlur={e => e.target.style.borderColor = "#d4a03020"}
+                onKeyDown={e => { if (e.key === "Enter") handleLogin(); }}
+              />
+            </div>
+            <div>
+              <label style={{ fontFamily:"'Cinzel', serif", fontSize:11, color:"var(--gold)", letterSpacing:4, fontWeight:700, display:"block", marginBottom:8 }}>SACRED PASSWORD</label>
+              <input
+                type="password" value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="Speak the words of passage..."
+                style={{
+                  width:"100%", background:"#0a042015", border:"1.5px solid #d4a03020",
+                  borderRadius:12, padding:"14px 18px", color:"var(--text-light)",
+                  fontSize:17, outline:"none", fontWeight:500,
+                  transition:"border-color 0.3s"
+                }}
+                onFocus={e => e.target.style.borderColor = "#d4a03050"}
+                onBlur={e => e.target.style.borderColor = "#d4a03020"}
+                onKeyDown={e => { if (e.key === "Enter") handleLogin(); }}
+              />
+            </div>
+            {error && <p style={{ color:"#e85040", fontSize:14, fontStyle:"italic", textAlign:"center" }}>{error}</p>}
+            <GoldBtn onClick={handleLogin} disabled={checking} style={{ width:"100%", marginTop:4 }}>
+              {checking ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}><Spinner /> Verifying...</span> : "Enter the Temple"}
+            </GoldBtn>
+          </div>
+        </CloudPanel>
+
+        <p style={{ textAlign:"center", marginTop:24, fontSize:13, color:"#4a3828", fontStyle:"italic" }}>
+          Each mortal's scrolls are their own — private and unseen by others
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ================================================================
    MAIN APP
    ================================================================ */
 export default function OracleOfPower() {
+  const [authed, setAuthed] = useState(false);
+  const [user, setUser] = useState("");
   const [page, setPage] = useState("oracle");
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState("");
@@ -328,9 +430,30 @@ export default function OracleOfPower() {
   const [history, setHistory] = useState([]);
   const [expandedSaved, setExpandedSaved] = useState(null);
 
+  // Check session on mount
   useEffect(() => {
-    try { const s = localStorage.getItem("oracle_saved"); if (s) setSaved(JSON.parse(s)); } catch {}
+    const sessionUser = sessionStorage.getItem("oracle_user");
+    const sessionAuth = sessionStorage.getItem("oracle_auth");
+    if (sessionAuth === "true" && sessionUser) {
+      setUser(sessionUser);
+      setAuthed(true);
+    }
   }, []);
+
+  // Load per-user saved scrolls
+  useEffect(() => {
+    if (!user) return;
+    try { const s = localStorage.getItem(`oracle_saved_${user}`); if (s) setSaved(JSON.parse(s)); } catch {}
+  }, [user]);
+
+  const handleLogin = (username) => { setUser(username); setAuthed(true); };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("oracle_user");
+    sessionStorage.removeItem("oracle_auth");
+    setAuthed(false); setUser(""); setSaved([]); setHistory([]);
+    setResponse(""); setScenarioResponse("");
+  };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
 
@@ -338,15 +461,17 @@ export default function OracleOfPower() {
     const item = { id: Date.now(), query: q, response: r, type, date: new Date().toISOString() };
     const updated = [item, ...saved];
     setSaved(updated);
-    try { localStorage.setItem("oracle_saved", JSON.stringify(updated)); } catch {}
+    try { localStorage.setItem(`oracle_saved_${user}`, JSON.stringify(updated)); } catch {}
     showToast("Inscribed upon the sacred scrolls");
   };
 
   const removeSaved = (id) => {
     const updated = saved.filter(s => s.id !== id);
     setSaved(updated);
-    try { localStorage.setItem("oracle_saved", JSON.stringify(updated)); } catch {}
+    try { localStorage.setItem(`oracle_saved_${user}`, JSON.stringify(updated)); } catch {}
   };
+
+  if (!authed) return <LoginGate onLogin={handleLogin} />;
 
   const askOracle = async (message, setter, loadSetter, isSim = false) => {
     if (!message?.trim()) return;
@@ -414,7 +539,7 @@ export default function OracleOfPower() {
       <nav style={{
         position:"sticky", top:0, zIndex:100,
         background:"linear-gradient(180deg, #08041af0, #08041acc, #08041a00)",
-        padding:"12px 24px 18px", display:"flex", justifyContent:"center", gap:3,
+        padding:"12px 24px 18px", display:"flex", justifyContent:"center", alignItems:"center", gap:3,
         backdropFilter:"blur(20px)"
       }}>
         {navItems.map(item => (
@@ -431,6 +556,16 @@ export default function OracleOfPower() {
             {item.label}
           </button>
         ))}
+        <div style={{ position:"absolute", right:24, display:"flex", alignItems:"center", gap:12 }}>
+          <span style={{ fontFamily:"'Cinzel', serif", fontSize:12, color:"var(--text-muted)", letterSpacing:1 }}>
+            {user.charAt(0).toUpperCase() + user.slice(1)}
+          </span>
+          <button onClick={handleLogout} style={{
+            background:"none", border:"1px solid #d4a03020", borderRadius:8,
+            padding:"6px 12px", color:"var(--text-muted)", cursor:"pointer",
+            fontFamily:"'Cinzel', serif", fontSize:11, letterSpacing:1, transition:"all 0.2s"
+          }}>Leave</button>
+        </div>
       </nav>
 
       <main style={{ maxWidth:820, margin:"0 auto", padding:"8px 24px 80px", position:"relative", zIndex:10 }}>
