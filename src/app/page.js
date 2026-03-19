@@ -195,8 +195,8 @@ const CloudPanel = ({ children, glow, style: extra = {} }) => (
     position:"relative",
     background:"linear-gradient(160deg, #1a1040dd 0%, #140a30cc 40%, #1a1040bb 100%)",
     border:"1.5px solid #d4a03025",
-    borderRadius:28,
-    padding:"32px 28px",
+    borderRadius:24,
+    padding:"28px 20px",
     backdropFilter:"blur(16px)",
     boxShadow: glow
       ? "0 0 60px #d4a03015, 0 8px 32px #00000044, inset 0 1px 0 #d4a03015"
@@ -539,36 +539,49 @@ export default function OracleOfPower() {
       <nav style={{
         position:"sticky", top:0, zIndex:100,
         background:"linear-gradient(180deg, #08041af0, #08041acc, #08041a00)",
-        padding:"12px 24px 18px", display:"flex", justifyContent:"center", alignItems:"center", gap:3,
-        backdropFilter:"blur(20px)"
+        backdropFilter:"blur(20px)",
+        padding:"0 0 14px"
       }}>
-        {navItems.map(item => (
-          <button key={item.id} onClick={() => setPage(item.id)} style={{
-            background: page === item.id ? "linear-gradient(135deg, #2a1458cc, #3a2068cc)" : "transparent",
-            border: page === item.id ? "1px solid #d4a03040" : "1px solid transparent",
-            borderRadius:12, padding:"10px 16px",
-            color: page === item.id ? "var(--gold-bright)" : "var(--text-muted)",
-            cursor:"pointer", fontFamily:"'Cinzel', serif", fontSize:13,
-            fontWeight: page === item.id ? 700 : 500,
-            transition:"all 0.3s", display:"flex", alignItems:"center", gap:6
-          }}>
-            <span style={{ fontSize:14 }}>{item.icon}</span>
-            {item.label}
-          </button>
-        ))}
-        <div style={{ position:"absolute", right:24, display:"flex", alignItems:"center", gap:12 }}>
-          <span style={{ fontFamily:"'Cinzel', serif", fontSize:12, color:"var(--text-muted)", letterSpacing:1 }}>
+        {/* User bar */}
+        <div style={{
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"10px 20px 8px", borderBottom:"1px solid #d4a03010"
+        }}>
+          <span style={{ fontFamily:"'Cinzel', serif", fontSize:11, color:"var(--text-muted)", letterSpacing:2, fontWeight:600 }}>
             {user.charAt(0).toUpperCase() + user.slice(1)}
           </span>
           <button onClick={handleLogout} style={{
             background:"none", border:"1px solid #d4a03020", borderRadius:8,
-            padding:"6px 12px", color:"var(--text-muted)", cursor:"pointer",
-            fontFamily:"'Cinzel', serif", fontSize:11, letterSpacing:1, transition:"all 0.2s"
+            padding:"5px 12px", color:"var(--text-muted)", cursor:"pointer",
+            fontFamily:"'Cinzel', serif", fontSize:10, letterSpacing:1, transition:"all 0.2s"
           }}>Leave</button>
+        </div>
+        {/* Nav tabs */}
+        <div className="nav-scroll" style={{
+          display:"flex", justifyContent:"center", gap:2,
+          padding:"8px 12px 0",
+          overflowX:"auto", WebkitOverflowScrolling:"touch",
+          msOverflowStyle:"none", scrollbarWidth:"none"
+        }}>
+          {navItems.map(item => (
+            <button key={item.id} onClick={() => setPage(item.id)} style={{
+              background: page === item.id ? "linear-gradient(135deg, #2a1458cc, #3a2068cc)" : "transparent",
+              border: page === item.id ? "1px solid #d4a03040" : "1px solid transparent",
+              borderRadius:10, padding:"8px 12px",
+              color: page === item.id ? "var(--gold-bright)" : "var(--text-muted)",
+              cursor:"pointer", fontFamily:"'Cinzel', serif", fontSize:11,
+              fontWeight: page === item.id ? 700 : 500,
+              transition:"all 0.3s", display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+              whiteSpace:"nowrap", flexShrink:0, minWidth:0
+            }}>
+              <span style={{ fontSize:16 }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
       </nav>
 
-      <main style={{ maxWidth:820, margin:"0 auto", padding:"8px 24px 80px", position:"relative", zIndex:10 }}>
+      <main style={{ maxWidth:820, margin:"0 auto", padding:"8px 16px 80px", position:"relative", zIndex:10 }}>
 
         {/* ======================== ORACLE ======================== */}
         {page === "oracle" && (
@@ -790,7 +803,7 @@ export default function OracleOfPower() {
           <div className="page-enter">
             <SectionTitle title="Today's Law" subtitle="The Fates have decreed this law shall guide your path today" />
 
-            <CloudPanel glow style={{ textAlign:"center", padding:"44px 32px", animation:"gentleBreathe 8s ease-in-out infinite" }}>
+            <CloudPanel glow style={{ textAlign:"center", padding:"36px 20px", animation:"gentleBreathe 8s ease-in-out infinite" }}>
               <div style={{
                 width:100, height:100, borderRadius:"50%",
                 background:"linear-gradient(135deg, #a07818, #d4a030, #f0c850, #f8e8a8)",
@@ -834,7 +847,7 @@ export default function OracleOfPower() {
 
             <div style={{ marginTop:40 }}>
               <h3 style={{ fontFamily:"'Cinzel', serif", color:"var(--text-muted)", fontSize:12, letterSpacing:4, marginBottom:16, fontWeight:600 }}>RELATED LAWS</h3>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))", gap:10 }}>
                 {LAWS.filter(l => l.cat === dailyLaw.cat && l.n !== dailyLaw.n).slice(0,4).map(law => (
                   <div key={law.n} onClick={() => {
                     setPage("oracle");
