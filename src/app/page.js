@@ -471,8 +471,6 @@ export default function OracleOfPower() {
     try { localStorage.setItem(`oracle_saved_${user}`, JSON.stringify(updated)); } catch {}
   };
 
-  if (!authed) return <LoginGate onLogin={handleLogin} />;
-
   const askOracle = async (message, setter, loadSetter, isSim = false) => {
     if (!message?.trim()) return;
     loadSetter(true); setter("");
@@ -502,6 +500,8 @@ export default function OracleOfPower() {
     }
     return ls;
   }, [lawFilter, searchLaw]);
+
+  if (!authed) return <LoginGate onLogin={handleLogin} />;
 
   const navItems = [
     { id:"oracle", label:"Oracle", icon:"\uD83C\uDFDB\uFE0F" },
